@@ -20,7 +20,7 @@ def _load_catalog() -> list[dict]:
     for doc in raw:
         name = doc['name']
         doc_dir = _docs_base() / name
-        meta_path = doc_dir / '.jejune' / 'doc.yaml'
+        meta_path = doc_dir / 'doc.yaml'
 
         entry: dict = {'name': name, 'url': doc.get('url', '')}
 
