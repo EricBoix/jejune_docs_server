@@ -1,0 +1,23 @@
+services:
+  jejune_docs_server:
+    build:
+      context: DockerContext
+      args:
+        INCLUDE_PDFS: "false"
+      secrets:
+        - gh_token
+        - catalog
+    ports:
+      - "8765:8765"
+    # --- DEV_MODE override: uncomment to read docs from host volume ---
+    # environment:
+    #   DEV_MODE: "true"
+    #   DEV_DOCS_MOUNT: /docs-mount
+    # volumes:
+    #   - ${JEJUNE_ROOT_DIR}:/docs-mount:ro
+
+secrets:
+  gh_token:
+    file: ${GH_TOKEN_FILE:-~/.github_token}
+  catalog:
+    file: ${CATALOG_FILE:-DockerContext/full-catalog.yaml}
