@@ -27,7 +27,7 @@ def _load_catalog() -> list[dict]:
         if meta_path.exists():
             meta = yaml.safe_load(meta_path.read_text()) or {}
             entry.update(meta)
-            for field in ('markdown_file', 'pdf_file', 'sentences_file'):
+            for field in ('markdown_file', 'pdf_file', 'sentences_file', 'turtle_file'):
                 rel = meta.get(field)
                 entry[f'has_{field[:-5]}'] = bool(rel and (doc_dir / rel).exists())
 

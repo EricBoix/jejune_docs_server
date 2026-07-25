@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir pyyaml
 ARG INCLUDE_PDFS=false
 ENV INCLUDE_PDFS=${INCLUDE_PDFS}
 
-COPY full-catalog.yaml /full-catalog.yaml
+COPY --from=catalog_ref full-catalog.yaml /full-catalog.yaml
 COPY build_docs.py /build_docs.py
 
 RUN --mount=type=secret,id=gh_token \

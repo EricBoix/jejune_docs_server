@@ -84,10 +84,31 @@ All endpoints, query parameters, and response schemas are listed and executable 
 | `GET`  | `/catalog`                        | List all catalog entries with metadata                                |
 | `GET`  | `/catalog/search?q=<term>`        | Case-insensitive substring search across catalog fields               |
 | `GET`  | `/docs/{name}/markdown`           | Raw markdown content of the document                                  |
+| `GET`  | `/docs/{name}/turtle`             | RDF/Turtle knowledge graph (requires `turtle_file` in `doc.yaml`)     |
 | `GET`  | `/docs/{name}/pdf`                | PDF file (requires `INCLUDE_PDFS=true` or `DEV_MODE=true`)             |
 | `GET`  | `/docs/{name}/chapters`           | Ordered list of chapters                                              |
 | `GET`  | `/docs/{name}/sentences`          | All sentences; filter with `?chapter=`, `?paragraph=`, `?sentence=`  |
 | `GET`  | `/docs/{name}/sentences/{index}`  | Single sentence by 0-based array index                                |
+
+## Health check
+
+Install the check package once (requires `jejune_cli` to be installed):
+
+```sh
+pip install -e check/
+```
+
+Then probe a running container:
+
+```sh
+python -m jejune_docs_server_check status
+```
+
+The default port is `8765`. Override with `DOCS_SERVER_PORT`:
+
+```sh
+DOCS_SERVER_PORT=9000 python -m jejune_docs_server_check status
+```
 
 ## Development mode
 

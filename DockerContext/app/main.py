@@ -58,6 +58,15 @@ def get_markdown(name: str):
     return FileResponse(path, media_type='text/markdown; charset=utf-8')
 
 
+@app.get('/docs/{name}/turtle', summary='RDF/Turtle knowledge graph')
+def get_turtle(name: str):
+    doc = _require_doc(name)
+    path = _doc_path(doc, 'turtle_file')
+    if not path:
+        raise HTTPException(404, 'No turtle file available for this document')
+    return FileResponse(path, media_type='text/turtle; charset=utf-8')
+
+
 @app.get('/docs/{name}/pdf', summary='PDF file (requires INCLUDE_PDFS=true or DEV_MODE=true)')
 def get_pdf(name: str):
     doc = _require_doc(name)

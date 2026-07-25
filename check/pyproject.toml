@@ -1,0 +1,12 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jejune-docs-server-check"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.entry-points."jejune.plugins"]
+docs-server = "jejune_docs_server_check.plugin:plugin"
