@@ -13,49 +13,61 @@ exploration and debugging.
 
 ## Catalogs
 
-`DockerContext/full-catalog.yaml` is the canonical reference of all known
-`jj_doc_*` repositories. It is the default catalog used when no deployment-specific
-one is provided.
+A catalog is a YAML file with a `documents` list, each entry containing at minimum
+`name` and `url` fields. It is injected at build time as a Docker secret and is never
+baked into a repository layer.
 
-A deployment-specific catalog is a subset of `full-catalog.yaml`. It lives outside this
-repository (typically in `jj_deployments/deploy_<name>/catalog.yaml`) and is injected
-at build time as a Docker secret — it is never baked into a repository layer.
+The builder is responsible for providing the catalog via the `CATALOG_FILE` environment
+variable. The build fails immediately if `CATALOG_FILE` is not set.
 
-Use `jejune_cli` to validate a deployment catalog before building:
+## Use cases
+
+### Docker only (no jejune\_cli)
+
+Set `CATALOG_FILE` to point to your catalog and run:
+
+```sh
+CATALOG_FILE=/path/to/catalog.yaml docker compose build
+```
+
+Catalog validation is your responsibility before building.
+
+### With jejune\_cli
+
+Use `jejune_cli` to validate the deployment catalog before building:
 
 ```sh
 jejune catalog check-deployment /path/to/jj_deployments/deploy_<name>
+```
+
+Then build with:
+
+```sh
+CATALOG_FILE=/path/to/jj_deployments/deploy_<name>/catalog.yaml docker compose build
 ```
 
 ## Prerequisites
 
 - Docker with Compose v2 (`docker compose`)
 - A GitHub personal-access token written to `~/.github_token` (needed only for private
-  repositories; the file may be empty for fully public catalogs)
+  repositories; omit or leave empty for fully public catalogs — the build will only fail
+  at clone time if a token is actually required)
 
 ## Build
 
-Default build (full catalog):
-
 ```sh
-docker compose build
+CATALOG_FILE=/path/to/catalog.yaml docker compose build
 ```
 
-Deployment-specific build (subset catalog from outside the repo):
+To use a specific token file:
 
 ```sh
-CATALOG_FILE=/path/to/jj_deployments/deploy_<name>/catalog.yaml docker compose build
+GH_TOKEN_FILE=~/.github_token CATALOG_FILE=/path/to/catalog.yaml docker compose build
 ```
-
-`build_docs.py` validates that the provided catalog is a subset of `full-catalog.yaml`
-(names and URLs must match) before cloning anything. The build fails if validation does
-not pass.
 
 To include PDF files in the image (excluded by default to keep the image small):
 
 ```sh
-INCLUDE_PDFS=true docker compose build
-# or with a deployment catalog:
 CATALOG_FILE=... INCLUDE_PDFS=true docker compose build
 ```
 
@@ -85,7 +97,7 @@ All endpoints, query parameters, and response schemas are listed and executable 
 | `GET`  | `/catalog/search?q=<term>`        | Case-insensitive substring search across catalog fields               |
 | `GET`  | `/docs/{name}/markdown`           | Raw markdown content of the document                                  |
 | `GET`  | `/docs/{name}/turtle`             | RDF/Turtle knowledge graph (requires `turtle_file` in `doc.yaml`)     |
-| `GET`  | `/docs/{name}/pdf`                | PDF file (requires `INCLUDE_PDFS=true` or `DEV_MODE=true`)             |
+| `GET`  | `/docs/{name}/pdf`                | PDF file (requires `INCLUDE_PDFS=true` or `DEV_MODE=true`)            |
 | `GET`  | `/docs/{name}/chapters`           | Ordered list of chapters                                              |
 | `GET`  | `/docs/{name}/sentences`          | All sentences; filter with `?chapter=`, `?paragraph=`, `?sentence=`  |
 | `GET`  | `/docs/{name}/sentences/{index}`  | Single sentence by 0-based array index                                |

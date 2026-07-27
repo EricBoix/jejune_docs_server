@@ -27,12 +27,24 @@ def docs_server_group():
     """Commands for the jejune docs-server UI component."""
 
 
-@docs_server_group.command("status")
-def status():
-    """Check that the docs-server container is reachable."""
-    ok, msg = _check_availability()
-    symbol = click.style("ok", fg="green") if ok else click.style("error", fg="red")
-    click.echo(f"docs-server  {symbol}  {msg}")
+@docs_server_group.command("status-availability")
+def status_availability():
+    """Show docs-server availability status (mirrors the doctor Status column)."""
+    ok, _ = _check_availability()
+    if ok:
+        click.echo(f"docs-server: {click.style('ok', fg='green')}")
+    else:
+        click.echo(f"docs-server: {click.style('error', fg='red')}")
+
+
+@docs_server_group.command("hint-availability")
+def hint_availability():
+    """Show how to start the docs-server container."""
+    ok, _ = _check_availability()
+    if ok:
+        click.echo(click.style("docs-server is reachable", fg="green"))
+    else:
+        click.echo("run `docker compose --env-file deployment.env up -d`")
 
 
 plugin = JejunePlugin(

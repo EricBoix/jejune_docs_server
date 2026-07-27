@@ -1,4 +1,4 @@
-# Stage 1 — clone doc repos
+# Stage 1 - clone doc repos
 FROM python:3.12-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir pyyaml
 ARG INCLUDE_PDFS=false
 ENV INCLUDE_PDFS=${INCLUDE_PDFS}
 
-COPY --from=catalog_ref full-catalog.yaml /full-catalog.yaml
 COPY build_docs.py /build_docs.py
 
 RUN --mount=type=secret,id=gh_token \
@@ -15,7 +14,7 @@ RUN --mount=type=secret,id=gh_token \
     GH_TOKEN=$(cat /run/secrets/gh_token 2>/dev/null || true) \
     python3 /build_docs.py
 
-# Stage 2 — runtime
+# Stage 2 - runtime
 FROM python:3.12-slim
 
 ARG INCLUDE_PDFS=false
