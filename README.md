@@ -1,9 +1,19 @@
-# jejune\_docs\_server
+# jejune\_docs\_server<!-- omit in toc -->
+
+## Table of content<!-- omit in toc -->
+
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+- [Build](#build)
+- [Run](#run)
+- [Swagger UI](#swagger-ui)
+- [API endpoints](#api-endpoints)
+- [Health check](#health-check)
+- [Development mode](#development-mode)
 
 ## Introduction
 
-UI components in the jejune ecosystem need runtime HTTP access to `jj_doc_*` content:
-markdown files, PDFs, and sentence chunks extracted from source documents. That content
+UI components in the jejune ecosystem need runtime HTTP access to `jejune_doc_*` documents content: markdown files, PDFs, and sentence chunks extracted from source documents. That content
 lives in git repositories with no built-in HTTP interface.
 
 `jejune_docs_server` bridges the gap: at image build time it clones the repositories
@@ -11,52 +21,44 @@ listed in a catalog, bakes their content into the image, and serves everything �
 catalog search — over HTTP using FastAPI. The interactive Swagger UI is included for
 exploration and debugging.
 
-## Catalogs
+## Prerequisites
 
-A catalog is a YAML file with a `documents` list, each entry containing at minimum
-`name` and `url` fields. It is injected at build time as a Docker secret and is never
-baked into a repository layer.
+- Docker with Compose v2 (`docker compose`)
+- A (jejune) catalog file
+- Associated git access tokens (only for a catalog accessing private jejune_doc_* repositories)
 
-The builder is responsible for providing the catalog via the `CATALOG_FILE` environment
-variable. The build fails immediately if `CATALOG_FILE` is not set.
+### Catalog
 
-## Use cases
+A catalog is a YAML file with a list of (jejune) `documents`, each entry containing at minimum `name` and `url` fields (refer to [https://github.com/EricBoix/jejune_cli/jejune_cli/schema/doc.yaml] for a simplified schema). The catalog content is injected at container build time.
 
-### Docker only (no jejune\_cli)
+The component builder is responsible for providing the catalog (which is mandatory for building) via the `CATALOG_FILE` environment variable.
+
+#### Defaulting the catalog with jejune\_cli
+
+If you wish to test the component and have no documents catalog at hand generate one with `jejune_cli` with
+
+```bash
+jejune catalog sample    # Creates catalog.yaml
+```
+
+Then use `jejune_cli` to validate that catalog before building:
+
+```sh
+jejune catalog test catalog.yaml
+```
+
+### Git token
+
+GH_TOKEN_FILE=~/.github_token
+
+## Build
+
+Before building assert the catalog is valid (easier with `jejune_cli` but this is another use case).
 
 Set `CATALOG_FILE` to point to your catalog and run:
 
 ```sh
-CATALOG_FILE=/path/to/catalog.yaml docker compose build
-```
-
-Catalog validation is your responsibility before building.
-
-### With jejune\_cli
-
-Use `jejune_cli` to validate the deployment catalog before building:
-
-```sh
-jejune catalog check-deployment /path/to/jj_deployments/deploy_<name>
-```
-
-Then build with:
-
-```sh
-CATALOG_FILE=/path/to/jj_deployments/deploy_<name>/catalog.yaml docker compose build
-```
-
-## Prerequisites
-
-- Docker with Compose v2 (`docker compose`)
-- A GitHub personal-access token written to `~/.github_token` (needed only for private
-  repositories; omit or leave empty for fully public catalogs — the build will only fail
-  at clone time if a token is actually required)
-
-## Build
-
-```sh
-CATALOG_FILE=/path/to/catalog.yaml docker compose build
+CATALOG_FILE=`pwd`/catalog.yaml docker compose build
 ```
 
 To use a specific token file:
@@ -77,7 +79,10 @@ CATALOG_FILE=... INCLUDE_PDFS=true docker compose build
 docker compose up
 ```
 
-The service is then reachable at <http://localhost:8765>.
+The service is then reachable at <http://localhost:8765>, where a catalog summary landing page
+lists every document and the file types available for it.
+
+
 
 ## Swagger UI
 
@@ -93,13 +98,14 @@ All endpoints, query parameters, and response schemas are listed and executable 
 
 | Method | Path                              | Description                                                           |
 |--------|-----------------------------------|-----------------------------------------------------------------------|
+| `GET`  | `/`                               | Catalog summary landing page (HTML)                                   |
 | `GET`  | `/catalog`                        | List all catalog entries with metadata                                |
 | `GET`  | `/catalog/search?q=<term>`        | Case-insensitive substring search across catalog fields               |
 | `GET`  | `/docs/{name}/markdown`           | Raw markdown content of the document                                  |
 | `GET`  | `/docs/{name}/turtle`             | RDF/Turtle knowledge graph (requires `turtle_file` in `doc.yaml`)     |
 | `GET`  | `/docs/{name}/pdf`                | PDF file (requires `INCLUDE_PDFS=true` or `DEV_MODE=true`)            |
 | `GET`  | `/docs/{name}/chapters`           | Ordered list of chapters                                              |
-| `GET`  | `/docs/{name}/sentences`          | All sentences; filter with `?chapter=`, `?paragraph=`, `?sentence=`  |
+| `GET`  | `/docs/{name}/sentences`          | All sentences; filter with `?chapter=`, `?paragraph=`, `?sentence=`   |
 | `GET`  | `/docs/{name}/sentences/{index}`  | Single sentence by 0-based array index                                |
 
 ## Health check

@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .catalog import find_doc, get_catalog, search_catalog
 from .sentences import find_by_position, get_chapters, load_sentences
@@ -17,6 +18,13 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/swagger",
 )
+
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
+
+
+@app.get("/", include_in_schema=False)
+async def landing():
+    return FileResponse("/app/static/index.html")
 
 _DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true'
 _INCLUDE_PDFS = os.environ.get('INCLUDE_PDFS', 'false').lower() == 'true'

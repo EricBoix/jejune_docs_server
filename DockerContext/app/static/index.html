@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jejune_docs_server</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+
+    #subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+
+    #subtitle a { color: #4a8fc1; text-decoration: none; }
+    #subtitle a:hover { text-decoration: underline; }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    thead tr { background: #2b3a4b; color: #fff; }
+    th, td { padding: 0.55rem 0.9rem; text-align: left; font-size: 0.875rem; }
+    th { font-weight: 600; letter-spacing: 0.03em; }
+    td { border-top: 1px solid #eee; }
+    tr:hover td { background: #f0f6ff; }
+
+    td.name { font-family: monospace; font-size: 0.82rem; }
+    td.name a { color: #2b3a4b; text-decoration: none; font-weight: 600; }
+    td.name a:hover { text-decoration: underline; }
+
+    td.url { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.url a { color: #4a8fc1; font-size: 0.8rem; text-decoration: none; }
+    td.url a:hover { text-decoration: underline; }
+
+    td.flag { text-align: center; }
+    .yes { color: #2a9d5c; font-weight: 700; }
+    .no  { color: #bbb; }
+
+    #status { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
+    #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>jejune_docs_server</h1>
+  <p id="subtitle">
+    Catalog summary &mdash; <a href="/swagger">Swagger UI</a>
+  </p>
+  <p id="status">Loading catalog&hellip;</p>
+  <p id="error" hidden></p>
+
+  <table id="catalog-table" hidden>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>URL</th>
+        <th>Markdown</th>
+        <th>Sentences</th>
+        <th>Turtle</th>
+        <th>PDF</th>
+      </tr>
+    </thead>
+    <tbody id="catalog-body"></tbody>
+  </table>
+
+  <script>
+    function flag(value) {
+      return value
+        ? '<span class="yes" title="available">&#10003;</span>'
+        : '<span class="no"  title="unavailable">&ndash;</span>';
+    }
+
+    function primaryLink(doc) {
+      if (doc.has_sentences) return `/docs/${doc.name}/sentences`;
+      if (doc.has_markdown)  return `/docs/${doc.name}/markdown`;
+      if (doc.has_turtle)    return `/docs/${doc.name}/turtle`;
+      return null;
+    }
+
+    async function loadCatalog() {
+      const status = document.getElementById('status');
+      const errEl  = document.getElementById('error');
+      const table  = document.getElementById('catalog-table');
+      const tbody  = document.getElementById('catalog-body');
+
+      try {
+        const resp = await fetch('/catalog');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        const docs = await resp.json();
+
+        status.textContent = `${docs.length} document${docs.length === 1 ? '' : 's'} in catalog`;
+
+        for (const doc of docs) {
+          const link = primaryLink(doc);
+          const nameCell = link
+            ? `<a href="${link}">${doc.name}</a>`
+            : doc.name;
+
+          const urlCell = doc.url
+            ? `<a href="${doc.url}" target="_blank" rel="noopener">${doc.url}</a>`
+            : '&ndash;';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="name">${nameCell}</td>
+            <td class="url">${urlCell}</td>
+            <td class="flag">${flag(doc.has_markdown)}</td>
+            <td class="flag">${flag(doc.has_sentences)}</td>
+            <td class="flag">${flag(doc.has_turtle)}</td>
+            <td class="flag">${flag(doc.has_pdf)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        table.hidden = false;
+      } catch (err) {
+        status.hidden = true;
+        errEl.textContent = `Failed to load catalog: ${err.message}`;
+        errEl.hidden = false;
+      }
+    }
+
+    loadCatalog();
+  </script>
+</body>
+</html>
