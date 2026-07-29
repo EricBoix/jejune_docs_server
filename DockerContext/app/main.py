@@ -35,6 +35,7 @@ def get_config():
     return {
         "kg_graph_viewer_url": os.environ.get("KG_GRAPH_VIEWER_URL", ""),
         "markdown_browser_url": os.environ.get("MARKDOWN_BROWSER_URL", ""),
+        "markdown_browser_trigger_url": os.environ.get("MARKDOWN_BROWSER_TRIGGER_URL", ""),
     }
 
 _DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true'

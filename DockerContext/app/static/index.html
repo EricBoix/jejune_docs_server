@@ -62,6 +62,9 @@
       border-radius: 3px;
       text-decoration: none;
       white-space: nowrap;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
     }
     .view-graph:hover { background: #218c4f; }
 
@@ -114,8 +117,33 @@
       return '<span class="yes" title="available">&#10003;</span>';
     }
 
-    function markdownCell(doc, mdUrl) {
+    async function openMarkdown(btn) {
+      const { mdUrl, triggerUrl, markdownUrl, name } = btn.dataset;
+      window.open(mdUrl + '/?folder=/config', '_blank');
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        try {
+          const r = await fetch(
+            `${triggerUrl}/open?url=${markdownUrl}&name=${name}`,
+            { mode: 'cors' }
+          );
+          if (r.ok) return;
+        } catch (_) {}
+      }
+    }
+
+    function markdownCell(doc, mdUrl, triggerUrl) {
       if (!doc.has_markdown) return '<span class="no" title="unavailable">&ndash;</span>';
+      if (triggerUrl) {
+        const markdownUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/markdown`);
+        const encodedName = encodeURIComponent(doc.name);
+        return `<button class="view-graph"
+          data-md-url="${mdUrl}"
+          data-trigger-url="${triggerUrl}"
+          data-markdown-url="${markdownUrl}"
+          data-name="${encodedName}"
+          onclick="openMarkdown(this)">View Markdown</button>`;
+      }
       if (mdUrl) {
         const markdownUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/markdown`);
         const href = `${mdUrl}/?folder=/config#url=${markdownUrl}&name=${encodeURIComponent(doc.name)}`;
@@ -134,9 +162,10 @@
         const [catalogResp, configResp] = await Promise.all([fetch('/catalog'), fetch('/config')]);
         if (!catalogResp.ok) throw new Error(`HTTP ${catalogResp.status}: ${catalogResp.statusText}`);
         const docs = await catalogResp.json();
-        const cfg   = configResp.ok ? await configResp.json() : {};
-        const kgUrl = (cfg.kg_graph_viewer_url  || '').replace(/\/$/, '');
-        const mdUrl = (cfg.markdown_browser_url || '').replace(/\/$/, '');
+        const cfg        = configResp.ok ? await configResp.json() : {};
+        const kgUrl      = (cfg.kg_graph_viewer_url          || '').replace(/\/$/, '');
+        const mdUrl      = (cfg.markdown_browser_url         || '').replace(/\/$/, '');
+        const triggerUrl = (cfg.markdown_browser_trigger_url || '').replace(/\/$/, '');
 
         status.textContent = `${docs.length} document${docs.length === 1 ? '' : 's'} in catalog`;
 
@@ -154,7 +183,7 @@
           tr.innerHTML = `
             <td class="name">${nameCell}</td>
             <td class="url">${urlCell}</td>
-            <td class="flag">${markdownCell(doc, mdUrl)}</td>
+            <td class="flag">${markdownCell(doc, mdUrl, triggerUrl)}</td>
             <td class="flag">${flag(doc.has_sentences)}</td>
             <td class="flag">${turtleCell(doc, kgUrl)}</td>
             <td class="flag">${flag(doc.has_pdf)}</td>
