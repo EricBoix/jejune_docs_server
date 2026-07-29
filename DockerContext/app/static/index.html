@@ -52,6 +52,19 @@
     .yes { color: #2a9d5c; font-weight: 700; }
     .no  { color: #bbb; }
 
+    .view-graph {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      background: #2a9d5c;
+      border-radius: 3px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .view-graph:hover { background: #218c4f; }
+
     #status { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
     #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
   </style>
@@ -92,6 +105,15 @@
       return null;
     }
 
+    function turtleCell(doc, kgUrl) {
+      if (!doc.has_turtle) return '<span class="no" title="unavailable">&ndash;</span>';
+      if (kgUrl) {
+        const turtleUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/turtle`);
+        return `<a class="view-graph" href="${kgUrl}/?url=${turtleUrl}" target="_blank" rel="noopener">View Graph</a>`;
+      }
+      return '<span class="yes" title="available">&#10003;</span>';
+    }
+
     async function loadCatalog() {
       const status = document.getElementById('status');
       const errEl  = document.getElementById('error');
@@ -99,9 +121,11 @@
       const tbody  = document.getElementById('catalog-body');
 
       try {
-        const resp = await fetch('/catalog');
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-        const docs = await resp.json();
+        const [catalogResp, configResp] = await Promise.all([fetch('/catalog'), fetch('/config')]);
+        if (!catalogResp.ok) throw new Error(`HTTP ${catalogResp.status}: ${catalogResp.statusText}`);
+        const docs = await catalogResp.json();
+        const cfg  = configResp.ok ? await configResp.json() : {};
+        const kgUrl = (cfg.kg_graph_viewer_url || '').replace(/\/$/, '');
 
         status.textContent = `${docs.length} document${docs.length === 1 ? '' : 's'} in catalog`;
 
@@ -121,7 +145,7 @@
             <td class="url">${urlCell}</td>
             <td class="flag">${flag(doc.has_markdown)}</td>
             <td class="flag">${flag(doc.has_sentences)}</td>
-            <td class="flag">${flag(doc.has_turtle)}</td>
+            <td class="flag">${turtleCell(doc, kgUrl)}</td>
             <td class="flag">${flag(doc.has_pdf)}</td>
           `;
           tbody.appendChild(tr);

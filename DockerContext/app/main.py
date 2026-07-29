@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -19,12 +20,19 @@ app = FastAPI(
     docs_url="/swagger",
 )
 
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
+
 app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 
 
 @app.get("/", include_in_schema=False)
 async def landing():
     return FileResponse("/app/static/index.html")
+
+
+@app.get("/config", include_in_schema=False)
+def get_config():
+    return {"kg_graph_viewer_url": os.environ.get("KG_GRAPH_VIEWER_URL", "")}
 
 _DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true'
 _INCLUDE_PDFS = os.environ.get('INCLUDE_PDFS', 'false').lower() == 'true'
