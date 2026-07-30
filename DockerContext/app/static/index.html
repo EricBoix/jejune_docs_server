@@ -70,6 +70,16 @@
 
     #status { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
     #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
+
+    #md-mode-control {
+      font-size: 0.82rem;
+      color: #555;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    #md-mode-control label { cursor: pointer; user-select: none; }
   </style>
 </head>
 <body>
@@ -79,6 +89,11 @@
   </p>
   <p id="status">Loading catalog&hellip;</p>
   <p id="error" hidden></p>
+  <div id="md-mode-control" hidden>
+    <input type="checkbox" id="md-replace-toggle"
+           onchange="setMdMode(this.checked ? 'replace' : 'append')">
+    <label for="md-replace-toggle">Replace on open (close previous docs)</label>
+  </div>
 
   <table id="catalog-table" hidden>
     <thead>
@@ -117,14 +132,25 @@
       return '<span class="yes" title="available">&#10003;</span>';
     }
 
+    function getMdMode() {
+      return localStorage.getItem('md_open_mode') || 'append';
+    }
+
+    function setMdMode(mode) {
+      localStorage.setItem('md_open_mode', mode);
+      document.getElementById('md-replace-toggle').checked = mode === 'replace';
+    }
+
     async function openMarkdown(btn) {
       const { mdUrl, triggerUrl, markdownUrl, name } = btn.dataset;
-      window.open(mdUrl + '/?folder=/config', '_blank');
+      const solo = getMdMode() === 'replace';
+      window.open(mdUrl + '/?folder=/config', 'markdown_browser');
+      const soloParam = solo ? '&solo=1' : '';
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 500));
         try {
           const r = await fetch(
-            `${triggerUrl}/open?url=${markdownUrl}&name=${name}`,
+            `${triggerUrl}/open?url=${markdownUrl}&name=${name}${soloParam}`,
             { mode: 'cors' }
           );
           if (r.ok) return;
@@ -168,6 +194,12 @@
         const triggerUrl = (cfg.markdown_browser_trigger_url || '').replace(/\/$/, '');
 
         status.textContent = `${docs.length} document${docs.length === 1 ? '' : 's'} in catalog`;
+
+        if (triggerUrl) {
+          const modeCtrl = document.getElementById('md-mode-control');
+          modeCtrl.hidden = false;
+          document.getElementById('md-replace-toggle').checked = getMdMode() === 'replace';
+        }
 
         for (const doc of docs) {
           const link = primaryLink(doc);
