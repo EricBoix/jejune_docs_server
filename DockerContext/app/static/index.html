@@ -44,9 +44,17 @@
     td.name a { color: #2b3a4b; text-decoration: none; font-weight: 600; }
     td.name a:hover { text-decoration: underline; }
 
-    td.url { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    td.url a { color: #4a8fc1; font-size: 0.8rem; text-decoration: none; }
-    td.url a:hover { text-decoration: underline; }
+    .url-link {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.75rem;
+      color: #4a8fc1;
+      border: 1px solid #4a8fc1;
+      border-radius: 3px;
+      text-decoration: none;
+      line-height: 1.4;
+    }
+    .url-link:hover { background: #4a8fc1; color: #fff; }
 
     td.flag { text-align: center; }
     .yes { color: #2a9d5c; font-weight: 700; }
@@ -72,14 +80,13 @@
     #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
 
     #md-mode-control {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 0.25rem;
-      margin-left: 0.5rem;
+      margin-top: 0.25rem;
       font-size: 0.7rem;
       font-weight: normal;
       opacity: 0.85;
-      vertical-align: middle;
     }
     #md-mode-control label { cursor: pointer; user-select: none; }
   </style>
@@ -96,11 +103,11 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>URL</th>
         <th>Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
         <th>Sentences</th>
         <th>Turtle</th>
         <th>PDF</th>
+        <th>Source URL</th>
       </tr>
     </thead>
     <tbody id="catalog-body"></tbody>
@@ -226,17 +233,17 @@
             : doc.name;
 
           const urlCell = doc.url
-            ? `<a href="${doc.url}" target="_blank" rel="noopener">${doc.url}</a>`
-            : '&ndash;';
+            ? `<a class="url-link" href="${doc.url}" target="_blank" rel="noopener" title="${doc.url}">&#8599;</a>`
+            : '<span class="no">&ndash;</span>';
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="name">${nameCell}</td>
-            <td class="url">${urlCell}</td>
             <td class="flag">${markdownCell(doc, mdUrl, triggerUrl)}</td>
             <td class="flag">${flag(doc.has_sentences)}</td>
             <td class="flag">${turtleCell(doc, kgUrl)}</td>
             <td class="flag">${flag(doc.has_pdf)}</td>
+            <td class="flag">${urlCell}</td>
           `;
           tbody.appendChild(tr);
         }
