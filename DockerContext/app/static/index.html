@@ -56,7 +56,7 @@
     }
     .url-link:hover { background: #4a8fc1; color: #fff; }
 
-    td.flag { text-align: center; }
+    .flag { text-align: center; }
     .yes { color: #2a9d5c; font-weight: 700; }
     .no  { color: #bbb; }
 
@@ -82,6 +82,7 @@
     #md-mode-control {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.25rem;
       margin-top: 0.25rem;
       font-size: 0.7rem;
@@ -103,11 +104,11 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
-        <th>Sentences</th>
-        <th>Turtle</th>
-        <th>PDF</th>
-        <th>Source URL</th>
+        <th class="flag">Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
+        <th class="flag">Sentences</th>
+        <th class="flag">Turtle</th>
+        <th class="flag">PDF</th>
+        <th class="flag">Source URL</th>
       </tr>
     </thead>
     <tbody id="catalog-body"></tbody>
