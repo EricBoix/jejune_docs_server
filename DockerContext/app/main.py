@@ -1,7 +1,9 @@
 import os
+import urllib.request
 from pathlib import Path
 from typing import Optional
 
+import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -14,7 +16,9 @@ app = FastAPI(
     title="jejune_docs_server",
     description=(
         "HTTP service for jejune_doc repositories. "
-        "Provides catalog search and per-document access to markdown, PDF, and sentences."
+        "Provides catalog search and per-document access to markdown, PDF, and sentences.\n\n"
+        "Internal endpoints (`/config`, `/project-link`) serve the landing page only "
+        "and are excluded from this schema."
     ),
     version="0.1.0",
     docs_url="/swagger",
@@ -37,6 +41,31 @@ def get_config():
         "markdown_browser_url": os.environ.get("MARKDOWN_BROWSER_URL", ""),
         "markdown_browser_trigger_url": os.environ.get("MARKDOWN_BROWSER_TRIGGER_URL", ""),
     }
+
+_PROJECT_LINK_YAML = (
+    "https://raw.githubusercontent.com/EricBoix/jejune_project/main/GitHostingSite.yaml"
+)
+_project_link: str | None = None
+
+
+def _fetch_project_link() -> str:
+    try:
+        with urllib.request.urlopen(_PROJECT_LINK_YAML, timeout=5) as resp:
+            data = yaml.safe_load(resp.read().decode())
+        site = data.get("git_hosting_site") or ""
+        repo = data.get("project_repository_name") or ""
+        return site + repo
+    except Exception:
+        return ""
+
+
+@app.get("/project-link", include_in_schema=False)
+def get_project_link():
+    global _project_link
+    if _project_link is None:
+        _project_link = _fetch_project_link()
+    return {"link": _project_link}
+
 
 _DEV_MODE = os.environ.get('DEV_MODE', 'false').lower() == 'true'
 _INCLUDE_PDFS = os.environ.get('INCLUDE_PDFS', 'false').lower() == 'true'

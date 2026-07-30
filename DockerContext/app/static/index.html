@@ -211,10 +211,13 @@
       const tbody  = document.getElementById('catalog-body');
 
       try {
-        const [catalogResp, configResp] = await Promise.all([fetch('/catalog'), fetch('/config')]);
+        const [catalogResp, configResp, projectLinkResp] = await Promise.all([
+          fetch('/catalog'), fetch('/config'), fetch('/project-link'),
+        ]);
         if (!catalogResp.ok) throw new Error(`HTTP ${catalogResp.status}: ${catalogResp.statusText}`);
         const docs = await catalogResp.json();
-        const cfg        = configResp.ok ? await configResp.json() : {};
+        const cfg         = configResp.ok ? await configResp.json() : {};
+        const projectLink = projectLinkResp.ok ? (await projectLinkResp.json()).link || '' : '';
         const kgUrl      = (cfg.kg_graph_viewer_url          || '').replace(/\/$/, '');
         const mdUrl      = (cfg.markdown_browser_url         || '').replace(/\/$/, '');
         const triggerUrl = (cfg.markdown_browser_trigger_url || '').replace(/\/$/, '');
@@ -229,10 +232,19 @@
 
         for (const doc of docs) {
           const link = primaryLink(doc);
-          const displayName = doc.name.replace('jejune_doc_', '>&lt; ');
-          const nameCell = link
-            ? `<a href="${link}">${displayName}</a>`
-            : displayName;
+          const jePrefix = 'jejune_doc_';
+          const hasPrefix = doc.name.startsWith(jePrefix);
+          const shortName = hasPrefix ? doc.name.slice(jePrefix.length) : doc.name;
+          let nameCell;
+          if (hasPrefix) {
+            const prefixEl = projectLink
+              ? `<a href="${projectLink}" target="_blank" rel="noopener">>&lt;</a>`
+              : `>&lt;`;
+            const nameEl = link ? `<a href="${link}">${shortName}</a>` : shortName;
+            nameCell = `${prefixEl} ${nameEl}`;
+          } else {
+            nameCell = link ? `<a href="${link}">${doc.name}</a>` : doc.name;
+          }
 
           const urlCell = doc.url
             ? `<a class="url-link" href="${doc.url}" target="_blank" rel="noopener" title="${doc.url}">&#8599;</a>`
