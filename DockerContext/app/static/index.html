@@ -229,9 +229,10 @@
 
         for (const doc of docs) {
           const link = primaryLink(doc);
+          const displayName = doc.name.replace('jejune_doc_', '>&lt; ');
           const nameCell = link
-            ? `<a href="${link}">${doc.name}</a>`
-            : doc.name;
+            ? `<a href="${link}">${displayName}</a>`
+            : displayName;
 
           const urlCell = doc.url
             ? `<a class="url-link" href="${doc.url}" target="_blank" rel="noopener" title="${doc.url}">&#8599;</a>`
