@@ -132,6 +132,8 @@
       return '<span class="yes" title="available">&#10003;</span>';
     }
 
+    let mdBrowserWindow = null;
+
     function getMdMode() {
       return localStorage.getItem('md_open_mode') || 'append';
     }
@@ -156,8 +158,15 @@
         if (r.ok) triggered = true;
       } catch (_) {}
 
-      // Open a new tab on first use, or focus the existing one.
-      window.open(mdUrl + '/?folder=/config', 'markdown_browser');
+      // Focus without navigation if the tab is already open; otherwise open fresh.
+      // window.open(url, name) navigates the existing tab when code-server has
+      // internally changed the URL (history.pushState), which reloads the extension
+      // and kills the in-flight fetchAndOpen.
+      if (mdBrowserWindow && !mdBrowserWindow.closed) {
+        mdBrowserWindow.focus();
+      } else {
+        mdBrowserWindow = window.open(mdUrl + '/?folder=/config', 'markdown_browser');
+      }
       if (triggered) return;
 
       // Tab was just opened: poll until the extension's trigger server is ready.
