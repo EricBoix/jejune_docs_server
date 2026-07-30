@@ -144,15 +144,27 @@
     async function openMarkdown(btn) {
       const { mdUrl, triggerUrl, markdownUrl, name } = btn.dataset;
       const solo = getMdMode() === 'replace';
-      window.open(mdUrl + '/?folder=/config', 'markdown_browser');
       const soloParam = solo ? '&solo=1' : '';
+      const openUrl = `${triggerUrl}/open?url=${markdownUrl}&name=${name}${soloParam}`;
+
+      // Attempt trigger before focusing the other tab: if the markdown browser
+      // tab is already loaded its trigger server responds immediately, while the
+      // docs server tab still has focus (avoids background-tab timer throttling).
+      let triggered = false;
+      try {
+        const r = await fetch(openUrl, { mode: 'cors' });
+        if (r.ok) triggered = true;
+      } catch (_) {}
+
+      // Open a new tab on first use, or focus the existing one.
+      window.open(mdUrl + '/?folder=/config', 'markdown_browser');
+      if (triggered) return;
+
+      // Tab was just opened: poll until the extension's trigger server is ready.
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 500));
         try {
-          const r = await fetch(
-            `${triggerUrl}/open?url=${markdownUrl}&name=${name}${soloParam}`,
-            { mode: 'cors' }
-          );
+          const r = await fetch(openUrl, { mode: 'cors' });
           if (r.ok) return;
         } catch (_) {}
       }
