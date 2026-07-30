@@ -72,12 +72,14 @@
     #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
 
     #md-mode-control {
-      font-size: 0.82rem;
-      color: #555;
-      margin-bottom: 1rem;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.25rem;
+      margin-left: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: normal;
+      opacity: 0.85;
+      vertical-align: middle;
     }
     #md-mode-control label { cursor: pointer; user-select: none; }
   </style>
@@ -89,18 +91,13 @@
   </p>
   <p id="status">Loading catalog&hellip;</p>
   <p id="error" hidden></p>
-  <div id="md-mode-control" hidden>
-    <input type="checkbox" id="md-replace-toggle"
-           onchange="setMdMode(this.checked ? 'replace' : 'append')">
-    <label for="md-replace-toggle">Replace on open (close previous docs)</label>
-  </div>
 
   <table id="catalog-table" hidden>
     <thead>
       <tr>
         <th>Name</th>
         <th>URL</th>
-        <th>Markdown</th>
+        <th>Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
         <th>Sentences</th>
         <th>Turtle</th>
         <th>PDF</th>
