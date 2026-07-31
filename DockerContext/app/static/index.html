@@ -152,16 +152,21 @@
       const { mdUrl, triggerUrl, markdownUrl, name } = btn.dataset;
       const solo = getMdMode() === 'replace';
       const soloParam = solo ? '&solo=1' : '';
-      const openUrl = `${triggerUrl}/open?url=${markdownUrl}&name=${name}${soloParam}`;
+      const fetchUrl     = `${triggerUrl}/fetch?url=${markdownUrl}&name=${name}`;
+      const highlightUrl = `${triggerUrl}/highlight?file=/config/docs-server/${name}.md${soloParam}`;
+
+      async function tryTrigger() {
+        const fr = await fetch(fetchUrl, { mode: 'cors' });
+        if (!fr.ok) return false;
+        const hr = await fetch(highlightUrl, { mode: 'cors' });
+        return hr.ok;
+      }
 
       // Attempt trigger before focusing the other tab: if the markdown browser
       // tab is already loaded its trigger server responds immediately, while the
       // docs server tab still has focus (avoids background-tab timer throttling).
       let triggered = false;
-      try {
-        const r = await fetch(openUrl, { mode: 'cors' });
-        if (r.ok) triggered = true;
-      } catch (_) {}
+      try { triggered = await tryTrigger(); } catch (_) {}
 
       // Focus without navigation if the tab is already open; otherwise open fresh.
       // window.open(url, name) navigates the existing tab when code-server has
@@ -177,10 +182,7 @@
       // Tab was just opened: poll until the extension's trigger server is ready.
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 500));
-        try {
-          const r = await fetch(openUrl, { mode: 'cors' });
-          if (r.ok) return;
-        } catch (_) {}
+        try { if (await tryTrigger()) return; } catch (_) {}
       }
     }
 
@@ -195,11 +197,6 @@
           data-markdown-url="${markdownUrl}"
           data-name="${encodedName}"
           onclick="openMarkdown(this)">View Markdown</button>`;
-      }
-      if (mdUrl) {
-        const markdownUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/markdown`);
-        const href = `${mdUrl}/?folder=/config#url=${markdownUrl}&name=${encodeURIComponent(doc.name)}`;
-        return `<a class="view-graph" href="${href}" target="_blank" rel="noopener">View Markdown</a>`;
       }
       return '<span class="yes" title="available">&#10003;</span>';
     }
