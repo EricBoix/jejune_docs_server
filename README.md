@@ -29,7 +29,7 @@ exploration and debugging.
 
 ### Catalog
 
-A catalog is a YAML file with a list of (jejune) `documents`, each entry containing at minimum `name` and `url` fields (refer to [https://github.com/EricBoix/jejune_cli/jejune_cli/schema/doc.yaml] for a simplified schema). The catalog content is injected at container build time.
+A catalog is a YAML file with a list of (jejune) `documents`, each entry containing at minimum `name` and `url` fields (refer to [https://github.com/EricBoix/jejune_cli/jejune_cli/schema/catalog.yaml] for a simplified schema). The catalog content is injected at container build time.
 
 The component builder is responsible for providing the catalog (which is mandatory for building) via the `CATALOG_FILE` environment variable.
 
@@ -102,7 +102,7 @@ All endpoints, query parameters, and response schemas are listed and executable 
 | `GET`  | `/catalog`                        | List all catalog entries with metadata                                |
 | `GET`  | `/catalog/search?q=<term>`        | Case-insensitive substring search across catalog fields               |
 | `GET`  | `/docs/{name}/markdown`           | Raw markdown content of the document                                  |
-| `GET`  | `/docs/{name}/turtle`             | RDF/Turtle knowledge graph (requires `turtle_file` in `doc.yaml`)     |
+| `GET`  | `/docs/{name}/turtle`             | RDF/Turtle knowledge graph (requires `turtle_file` in `catalog.yaml`) |
 | `GET`  | `/docs/{name}/pdf`                | PDF file (requires `INCLUDE_PDFS=true` or `DEV_MODE=true`)            |
 | `GET`  | `/docs/{name}/chapters`           | Ordered list of chapters                                              |
 | `GET`  | `/docs/{name}/sentences`          | All sentences; filter with `?chapter=`, `?paragraph=`, `?sentence=`   |
