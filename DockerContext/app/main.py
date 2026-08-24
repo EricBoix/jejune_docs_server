@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -105,6 +105,13 @@ def get_markdown(name: str):
     if not path:
         raise HTTPException(404, 'No markdown file available for this document')
     return FileResponse(path, media_type='text/markdown; charset=utf-8')
+
+
+@app.get('/docs/{name}/markdown-url', summary='Canonical public URL for the raw markdown')
+def get_markdown_url(name: str, request: Request):
+    _require_doc(name)
+    base = str(request.base_url).rstrip('/')
+    return {"markdown_url": f"{base}/docs/{name}/markdown"}
 
 
 @app.get('/docs/{name}/turtle', summary='RDF/Turtle knowledge graph')

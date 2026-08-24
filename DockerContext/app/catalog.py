@@ -43,7 +43,10 @@ def get_catalog() -> list[dict]:
 
 
 def find_doc(name: str) -> dict | None:
-    return next((d for d in get_catalog() if d['name'] == name), None)
+    return next(
+        (d for d in get_catalog() if d.get('name') == name or d.get('doc_name') == name),
+        None,
+    )
 
 
 def search_catalog(q: str) -> list[dict]:
