@@ -52,7 +52,7 @@ plugin = JejunePlugin(
     group=docs_server_group,
     config_vars=[_CONFIG_VAR],
     config_hint=f"Set {_CONFIG_VAR} to the port exposed by the docs-server container (default {_DEFAULT_PORT}).",
-    avail_hint="Run `docker compose up -d` in your SomeMac deployment directory.",
+    avail_hint="",
     check_availability=_check_availability,
     stage="extension",
 )
