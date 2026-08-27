@@ -44,7 +44,10 @@ def get_catalog() -> list[dict]:
 
 def find_doc(name: str) -> dict | None:
     return next(
-        (d for d in get_catalog() if d.get('name') == name or d.get('doc_name') == name),
+        (d for d in get_catalog()
+         if d.get('name') == name
+         or d.get('doc_name') == name
+         or f"jejune_doc_{d.get('slug', '')}" == name),
         None,
     )
 
