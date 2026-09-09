@@ -5,6 +5,7 @@ import urllib.request
 import click
 
 from jejune_cli.plugin_description import plugin_description
+from .component_cont_docs_server import comp_docs_server
 
 _DEFAULT_PORT = "8765"
 _CONFIG_VAR = "DOCS_SERVER_PORT"
@@ -55,4 +56,5 @@ plugin = plugin_description(
     avail_hint="",
     check_availability=_check_availability,
     stage="extension",
+    component=comp_docs_server(),
 )
