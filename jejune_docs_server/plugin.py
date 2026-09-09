@@ -50,7 +50,6 @@ def hint_availability():
 plugin = plugin_description(
     name="docs-server",
     group=docs_server_group,
-    repo_name="jejune_docs_server",
     config_vars=[_CONFIG_VAR],
     config_hint=f"Set {_CONFIG_VAR} to the port exposed by the docs-server container (default {_DEFAULT_PORT}).",
     avail_hint="",
