@@ -134,7 +134,17 @@
         const turtleUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/turtle`);
         return `<a class="view-graph" href="${kgUrl}/?url=${turtleUrl}" target="_blank" rel="noopener">View Graph</a>`;
       }
-      return '<span class="yes" title="available">&#10003;</span>';
+      return `<a class="view-graph" href="/docs/${doc.name}/turtle" target="_blank" rel="noopener">View</a>`;
+    }
+
+    function sentencesCell(doc) {
+      if (!doc.has_sentences) return '<span class="no" title="unavailable">&ndash;</span>';
+      return `<a class="view-graph" href="/docs/${doc.name}/sentences" target="_blank" rel="noopener">View</a>`;
+    }
+
+    function pdfCell(doc) {
+      if (!doc.has_pdf) return '<span class="no" title="unavailable">&ndash;</span>';
+      return `<a class="view-graph" href="/docs/${doc.name}/pdf" target="_blank" rel="noopener">View PDF</a>`;
     }
 
     let mdBrowserWindow = null;
@@ -198,7 +208,7 @@
           data-name="${encodedName}"
           onclick="openMarkdown(this)">View Markdown</button>`;
       }
-      return '<span class="yes" title="available">&#10003;</span>';
+      return `<a class="view-graph" href="/docs/${doc.name}/markdown" target="_blank" rel="noopener">View</a>`;
     }
 
     async function loadCatalog() {
@@ -251,9 +261,9 @@
           tr.innerHTML = `
             <td class="name">${nameCell}</td>
             <td class="flag">${markdownCell(doc, mdUrl, triggerUrl)}</td>
-            <td class="flag">${flag(doc.has_sentences)}</td>
+            <td class="flag">${sentencesCell(doc)}</td>
             <td class="flag">${turtleCell(doc, kgUrl)}</td>
-            <td class="flag">${flag(doc.has_pdf)}</td>
+            <td class="flag">${pdfCell(doc)}</td>
             <td class="flag">${urlCell}</td>
           `;
           tbody.appendChild(tr);
