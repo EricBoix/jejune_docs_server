@@ -10,7 +10,7 @@ class comp_docs_server(cont_comp):
             image_name="jejune-docs-server",
             service_name="docs-server",
             dependencies=[ComponentRegistry().get("ecosystem")],
-            hint="run `jejune deployment install`",
+            hint="run `jejune build`",
         )
         self.repos = [("DockerContext", "DOCS_SERVER_CONTEXT")]
 

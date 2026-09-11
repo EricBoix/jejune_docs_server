@@ -57,4 +57,5 @@ plugin = plugin_description(
     check_availability=_check_availability,
     stage="extension",
     component=comp_docs_server(),
+    repo_name="jejune_docs_server",
 )
