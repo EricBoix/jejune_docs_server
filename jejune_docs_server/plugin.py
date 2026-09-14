@@ -10,8 +10,12 @@ from .component_cont_docs_server import comp_docs_server
 _DEFAULT_PORT = "8765"
 _CONFIG_VAR = "DOCS_SERVER_PORT"
 
+_component = comp_docs_server()
+
 
 def _check_availability() -> tuple[bool, str]:
+    if not _component.is_running()[0]:
+        return False, "container not running"
     port = os.environ.get(_CONFIG_VAR, _DEFAULT_PORT)
     url = f"http://localhost:{port}/catalog"
     try:
@@ -56,6 +60,6 @@ plugin = plugin_description(
     avail_hint="",
     check_availability=_check_availability,
     stage="extension",
-    component=comp_docs_server(),
+    component=_component,
     repo_name="jejune_docs_server",
 )
