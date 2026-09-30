@@ -1,26 +1,22 @@
 import json
-import re
 from pathlib import Path
-
-_SOURCE_RE = re.compile(
-    r"Chapter: (?P<chapter>.+?), paragraph number (?P<paragraph>\d+), "
-    r"sentence number (?P<sentence>\d+) on page (?P<page>\S+)"
-)
 
 
 def load_sentences(path: Path) -> list[dict]:
     raw: list[dict] = json.loads(path.read_text())
     result = []
     for i, item in enumerate(raw):
-        src = item.get('metadata', {}).get('source', '')
-        m = _SOURCE_RE.search(src)
+        meta = item.get('metadata', {})
+        heading_chain = ' / '.join(
+            meta[key] for key in ('h2', 'h3', 'h4', 'h5') if meta.get(key)
+        )
         result.append({
             'array_index': i,
             'page_content': item.get('page_content', ''),
-            'chapter': m.group('chapter') if m else None,
-            'paragraph': int(m.group('paragraph')) if m else None,
-            'sentence': int(m.group('sentence')) if m else None,
-            'page': m.group('page') if m else None,
+            'chapter': heading_chain or None,
+            'paragraph': meta.get('paragraph_number'),
+            'sentence': meta.get('sentence_number'),
+            'page': meta.get('page'),
         })
     return result
 
