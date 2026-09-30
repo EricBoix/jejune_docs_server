@@ -1,6 +1,5 @@
 """docs-server containerized component."""
 from jejune_cli.component_containerized import cont_comp
-from jejune_cli.component_registry import ComponentRegistry
 
 
 class comp_docs_server(cont_comp):
@@ -9,10 +8,11 @@ class comp_docs_server(cont_comp):
             name="docs-server",
             image_name="jejune-docs-server",
             service_name="docs-server",
-            dependencies=[ComponentRegistry().get("ecosystem")],
             hint="run `jejune build`",
         )
         self.repos = [("DockerContext", "DOCS_SERVER_CONTEXT")]
+        if cont_comp._ecosystem is not None:
+            self.conditional_dependencies = [(lambda: not self.is_available(), cont_comp._ecosystem)]
 
     def is_available(self) -> bool:
         return self.is_built()
