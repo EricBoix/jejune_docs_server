@@ -11,8 +11,8 @@ class comp_docs_server(cont_comp):
             hint="run `jejune build`",
         )
         self.repos = [("DockerContext", "DOCS_SERVER_CONTEXT")]
-        if cont_comp._ecosystem is not None:
-            self.conditional_dependencies = [(lambda: not self.is_available(), cont_comp._ecosystem)]
+        if self._context.ecosystem is not None:
+            self.conditional_dependencies = [(lambda: not self.is_available(), self._context.ecosystem)]
 
     def is_available(self) -> bool:
         return self.is_built()
