@@ -128,10 +128,18 @@
 
     function graphsCell(doc, kgUrl) {
       if (!doc.has_graph_extractions) return '<span class="no" title="unavailable">&ndash;</span>';
-      if (kgUrl) {
-        return `<a class="view-graph" href="${kgUrl}" target="_blank" rel="noopener">View Graph</a>`;
-      }
-      return `<a class="view-graph" href="/docs/${doc.name}/graphs" target="_blank" rel="noopener">View</a>`;
+      const extractions = (doc.graph_extractions || []).filter(ex => ex.turtle_file);
+      if (!extractions.length) return '<span class="no" title="unavailable">&ndash;</span>';
+      const origin = window.location.origin;
+      return extractions.map(ex => {
+        const turtleUrl = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/turtle`;
+        const label = ex.chunk_short_name;
+        if (kgUrl) {
+          const href = `${kgUrl}?url=${encodeURIComponent(turtleUrl)}`;
+          return `<a class="view-graph" href="${href}" target="_blank" rel="noopener">${label}</a>`;
+        }
+        return `<a class="view-graph" href="${turtleUrl}" target="_blank" rel="noopener">${label}</a>`;
+      }).join(' ');
     }
 
     function pdfCell(doc) {
