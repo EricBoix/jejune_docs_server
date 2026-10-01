@@ -5,12 +5,12 @@ import urllib.request
 import click
 
 from jejune_cli.plugin_description import PluginDescription
-from .component_cont_docs_server import comp_docs_server
+from .component_cont_docs_server import CompDocsServer
 
 _DEFAULT_PORT = "8765"
 _CONFIG_VAR = "DOCS_SERVER_PORT"
 
-_component = comp_docs_server()
+_component = CompDocsServer()
 
 
 def _check_availability() -> tuple[bool, str]:
