@@ -27,9 +27,15 @@ def _load_catalog() -> list[dict]:
         if meta_path.exists():
             meta = yaml.safe_load(meta_path.read_text()) or {}
             entry.update(meta)
-            for field in ('markdown_file', 'pdf_file', 'sentences_file', 'turtle_file'):
+            for field in ('markdown_file', 'pdf_file'):
                 rel = meta.get(field)
                 entry[f'has_{field[:-5]}'] = bool(rel and (doc_dir / rel).exists())
+            extractions = meta.get('graph_extractions') or []
+            entry['has_graph_extractions'] = bool(extractions) and any(
+                (doc_dir / ex['turtle_file']).exists()
+                for ex in extractions
+                if ex.get('turtle_file')
+            )
 
         result.append(entry)
     return result

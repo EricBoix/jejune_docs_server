@@ -10,13 +10,13 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .catalog import find_doc, get_catalog, search_catalog
-from .sentences import find_by_position, get_chapters, load_sentences
+from .chunks import find_chunk_by_position, get_chapters, load_chunks
 
 app = FastAPI(
     title="jejune_docs_server",
     description=(
         "HTTP service for jejune_doc repositories. "
-        "Provides catalog search and per-document access to markdown, PDF, and sentences.\n\n"
+        "Provides catalog search and per-document access to markdown, PDF, and graph extractions.\n\n"
         "Internal endpoints (`/config`, `/project-link`) serve the landing page only "
         "and are excluded from this schema."
     ),
@@ -76,8 +76,24 @@ def _doc_path(doc: dict, field: str) -> Path | None:
     rel = doc.get(field)
     if not rel:
         return None
-    p = _DOCS_BASE / doc['name'] / rel
-    return p if p.exists() else None
+    path = _DOCS_BASE / doc['name'] / rel
+    return path if path.exists() else None
+
+
+def _find_graph_extraction(doc: dict, model_name: str, chunk_short_name: str) -> dict | None:
+    for entry in (doc.get('graph_extractions') or []):
+        if entry.get('model_name') == model_name and entry.get('chunk_short_name') == chunk_short_name:
+            return entry
+    return None
+
+
+def _require_graph_extraction(doc: dict, model_name: str, chunk_short_name: str) -> dict:
+    entry = _find_graph_extraction(doc, model_name, chunk_short_name)
+    if entry is None:
+        raise HTTPException(
+            404, f"No graph extraction found for model='{model_name}' chunk='{chunk_short_name}'"
+        )
+    return entry
 
 
 # ---------------------------------------------------------------------------
@@ -114,15 +130,6 @@ def get_markdown_url(name: str, request: Request):
     return {"markdown_url": f"{base}/docs/{name}/markdown"}
 
 
-@app.get('/docs/{name}/turtle', summary='RDF/Turtle knowledge graph')
-def get_turtle(name: str):
-    doc = _require_doc(name)
-    path = _doc_path(doc, 'turtle_file')
-    if not path:
-        raise HTTPException(404, 'No turtle file available for this document')
-    return FileResponse(path, media_type='text/turtle; charset=utf-8')
-
-
 @app.get('/docs/{name}/pdf', summary='PDF file (requires INCLUDE_PDFS=true or DEV_MODE=true)')
 def get_pdf(name: str):
     doc = _require_doc(name)
@@ -135,42 +142,88 @@ def get_pdf(name: str):
 
 
 # ---------------------------------------------------------------------------
-# Sentences
+# Graph extractions
 # ---------------------------------------------------------------------------
 
-@app.get('/docs/{name}/chapters', summary='Chapter list in order of first appearance')
-def list_chapters(name: str):
-    return get_chapters(_load_sentences(name))
+@app.get('/docs/{name}/graphs', summary='List all graph extraction entries')
+def list_graphs(name: str):
+    doc = _require_doc(name)
+    return doc.get('graph_extractions') or []
 
 
 @app.get(
-    '/docs/{name}/sentences',
-    summary='All sentences, optionally filtered by chapter / paragraph / sentence number',
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/turtle',
+    summary='RDF/Turtle knowledge graph for a given model and chunk type',
 )
-def get_sentences(
+def get_graph_turtle(name: str, model_name: str, chunk_short_name: str):
+    doc = _require_doc(name)
+    entry = _require_graph_extraction(doc, model_name, chunk_short_name)
+    turtle_file = entry.get('turtle_file')
+    if not turtle_file:
+        raise HTTPException(404, 'This extraction entry has no turtle_file')
+    path = _DOCS_BASE / doc['name'] / turtle_file
+    if not path.exists():
+        raise HTTPException(404, 'Turtle file not found on disk')
+    return FileResponse(path, media_type='text/turtle; charset=utf-8')
+
+
+@app.get(
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/chunks',
+    summary='Source chunk JSON file for a given model and chunk type',
+)
+def get_graph_chunk_file(name: str, model_name: str, chunk_short_name: str):
+    doc = _require_doc(name)
+    entry = _require_graph_extraction(doc, model_name, chunk_short_name)
+    chunk_file = entry.get('chunk_file')
+    if not chunk_file:
+        raise HTTPException(404, 'This extraction entry has no chunk_file')
+    path = _DOCS_BASE / doc['name'] / chunk_file
+    if not path.exists():
+        raise HTTPException(404, 'Chunk file not found on disk')
+    return FileResponse(path, media_type='application/json; charset=utf-8')
+
+
+@app.get(
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/chapters',
+    summary='Chapter list derived from chunk metadata, in order of first appearance',
+)
+def list_chunk_chapters(name: str, model_name: str, chunk_short_name: str):
+    return get_chapters(_load_chunk_entries(name, model_name, chunk_short_name))
+
+
+@app.get(
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/entries',
+    summary='Parsed chunk entries, optionally filtered by chapter / paragraph / sentence',
+)
+def get_chunk_entries(
     name: str,
+    model_name: str,
+    chunk_short_name: str,
     chapter: Optional[str] = None,
     paragraph: Optional[int] = None,
     sentence: Optional[int] = None,
 ):
-    sentences = _load_sentences(name)
+    chunks = _load_chunk_entries(name, model_name, chunk_short_name)
     if chapter is not None and paragraph is not None and sentence is not None:
-        result = find_by_position(sentences, chapter, paragraph, sentence)
+        result = find_chunk_by_position(chunks, chapter, paragraph, sentence)
         if result is None:
-            raise HTTPException(404, 'Sentence not found')
+            raise HTTPException(404, 'Chunk not found at the given position')
         return result
     if chapter is not None:
-        ch_lower = chapter.lower()
-        sentences = [s for s in sentences if (s.get('chapter') or '').lower() == ch_lower]
-    return sentences
+        chapter_lower = chapter.lower()
+        chunks = [chunk for chunk in chunks if (chunk.get('chapter') or '').lower() == chapter_lower]
+    return chunks
 
 
-@app.get('/docs/{name}/sentences/{index}', summary='Sentence by 0-based array index')
-def get_sentence_by_index(name: str, index: int):
-    sentences = _load_sentences(name)
-    if index < 0 or index >= len(sentences):
-        raise HTTPException(404, f'Index {index} out of range (0–{len(sentences) - 1})')
-    return sentences[index]
+@app.get(
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/entries/{index}',
+    summary='Single chunk entry by 0-based array index',
+)
+def get_chunk_entry_by_index(name: str, model_name: str, chunk_short_name: str, index: int):
+    chunks = _load_chunk_entries(name, model_name, chunk_short_name)
+    if index < 0 or index >= len(chunks):
+        raise HTTPException(404, f'Index {index} out of range (0–{len(chunks) - 1})')
+    return chunks[index]
 
 
 # ---------------------------------------------------------------------------
@@ -184,9 +237,13 @@ def _require_doc(name: str) -> dict:
     return doc
 
 
-def _load_sentences(name: str) -> list[dict]:
+def _load_chunk_entries(name: str, model_name: str, chunk_short_name: str) -> list[dict]:
     doc = _require_doc(name)
-    path = _doc_path(doc, 'sentences_file')
-    if not path:
-        raise HTTPException(404, 'No sentences file available for this document')
-    return load_sentences(path)
+    entry = _require_graph_extraction(doc, model_name, chunk_short_name)
+    chunk_file = entry.get('chunk_file')
+    if not chunk_file:
+        raise HTTPException(404, 'This extraction entry has no chunk_file')
+    path = _DOCS_BASE / doc['name'] / chunk_file
+    if not path.exists():
+        raise HTTPException(404, 'Chunk file not found on disk')
+    return load_chunks(path)

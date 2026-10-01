@@ -105,8 +105,7 @@
       <tr>
         <th>Name</th>
         <th class="flag">Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
-        <th class="flag">Sentences</th>
-        <th class="flag">Turtle</th>
+        <th class="flag">Graphs</th>
         <th class="flag">PDF</th>
         <th class="flag">Source URL</th>
       </tr>
@@ -122,24 +121,17 @@
     }
 
     function primaryLink(doc) {
-      if (doc.has_sentences) return `/docs/${doc.name}/sentences`;
-      if (doc.has_markdown)  return `/docs/${doc.name}/markdown`;
-      if (doc.has_turtle)    return `/docs/${doc.name}/turtle`;
+      if (doc.has_graph_extractions) return `/docs/${doc.name}/graphs`;
+      if (doc.has_markdown)          return `/docs/${doc.name}/markdown`;
       return null;
     }
 
-    function turtleCell(doc, kgUrl) {
-      if (!doc.has_turtle) return '<span class="no" title="unavailable">&ndash;</span>';
+    function graphsCell(doc, kgUrl) {
+      if (!doc.has_graph_extractions) return '<span class="no" title="unavailable">&ndash;</span>';
       if (kgUrl) {
-        const turtleUrl = encodeURIComponent(window.location.origin + `/docs/${doc.name}/turtle`);
-        return `<a class="view-graph" href="${kgUrl}/?url=${turtleUrl}" target="_blank" rel="noopener">View Graph</a>`;
+        return `<a class="view-graph" href="${kgUrl}" target="_blank" rel="noopener">View Graph</a>`;
       }
-      return `<a class="view-graph" href="/docs/${doc.name}/turtle" target="_blank" rel="noopener">View</a>`;
-    }
-
-    function sentencesCell(doc) {
-      if (!doc.has_sentences) return '<span class="no" title="unavailable">&ndash;</span>';
-      return `<a class="view-graph" href="/docs/${doc.name}/sentences" target="_blank" rel="noopener">View</a>`;
+      return `<a class="view-graph" href="/docs/${doc.name}/graphs" target="_blank" rel="noopener">View</a>`;
     }
 
     function pdfCell(doc) {
@@ -261,8 +253,7 @@
           tr.innerHTML = `
             <td class="name">${nameCell}</td>
             <td class="flag">${markdownCell(doc, mdUrl, triggerUrl)}</td>
-            <td class="flag">${sentencesCell(doc)}</td>
-            <td class="flag">${turtleCell(doc, kgUrl)}</td>
+            <td class="flag">${graphsCell(doc, kgUrl)}</td>
             <td class="flag">${pdfCell(doc)}</td>
             <td class="flag">${urlCell}</td>
           `;

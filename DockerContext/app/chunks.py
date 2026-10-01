@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-def load_sentences(path: Path) -> list[dict]:
+def load_chunks(path: Path) -> list[dict]:
     raw: list[dict] = json.loads(path.read_text())
     result = []
     for i, item in enumerate(raw):
@@ -21,25 +21,25 @@ def load_sentences(path: Path) -> list[dict]:
     return result
 
 
-def get_chapters(sentences: list[dict]) -> list[str]:
+def get_chapters(chunks: list[dict]) -> list[str]:
     seen: list[str] = []
-    for s in sentences:
-        ch = s.get('chapter')
-        if ch and ch not in seen:
-            seen.append(ch)
+    for chunk in chunks:
+        chapter = chunk.get('chapter')
+        if chapter and chapter not in seen:
+            seen.append(chapter)
     return seen
 
 
-def find_by_position(
-    sentences: list[dict], chapter: str, paragraph: int, sentence: int
+def find_chunk_by_position(
+    chunks: list[dict], chapter: str, paragraph: int, sentence: int
 ) -> dict | None:
-    ch_lower = chapter.lower()
+    chapter_lower = chapter.lower()
     return next(
         (
-            s for s in sentences
-            if (s.get('chapter') or '').lower() == ch_lower
-            and s.get('paragraph') == paragraph
-            and s.get('sentence') == sentence
+            chunk for chunk in chunks
+            if (chunk.get('chapter') or '').lower() == chapter_lower
+            and chunk.get('paragraph') == paragraph
+            and chunk.get('sentence') == sentence
         ),
         None,
     )
