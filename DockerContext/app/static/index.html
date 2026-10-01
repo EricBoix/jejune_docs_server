@@ -76,6 +76,39 @@
     }
     .view-graph:hover { background: #218c4f; }
 
+    .extraction-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .extraction-row + .extraction-row { margin-top: 0.25rem; }
+
+    .model-label {
+      font-size: 0.7rem;
+      color: #555;
+      white-space: nowrap;
+      min-width: 5rem;
+    }
+
+    .pill-pair { display: inline-flex; }
+
+    .pill-left, .pill-right {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pill-left  { background: #4a8fc1; border-radius: 3px 0 0 3px; }
+    .pill-right { background: #2a9d5c; border-radius: 0 3px 3px 0; }
+    .pill-left:hover  { background: #3a7aaa; }
+    .pill-right:hover { background: #218c4f; }
+
     #status { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
     #error  { color: #c0392b; font-size: 0.85rem; margin-bottom: 1rem; }
 
@@ -105,7 +138,7 @@
       <tr>
         <th>Name</th>
         <th class="flag">Markdown<span id="md-mode-control" hidden><input type="checkbox" id="md-replace-toggle" onchange="setMdMode(this.checked ? 'replace' : 'append')"><label for="md-replace-toggle">replace</label></span></th>
-        <th class="flag">Graphs</th>
+        <th>Graphs</th>
         <th class="flag">PDF</th>
         <th class="flag">Source URL</th>
       </tr>
@@ -130,16 +163,29 @@
       if (!doc.has_graph_extractions) return '<span class="no" title="unavailable">&ndash;</span>';
       const extractions = (doc.graph_extractions || []).filter(ex => ex.turtle_file);
       if (!extractions.length) return '<span class="no" title="unavailable">&ndash;</span>';
+
+      const groups = new Map();
+      for (const ex of extractions) {
+        const model = ex.model_name || '';
+        if (!groups.has(model)) groups.set(model, []);
+        groups.get(model).push(ex);
+      }
+
       const origin = window.location.origin;
-      return extractions.map(ex => {
-        const turtleUrl = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/turtle`;
-        const label = ex.chunk_short_name;
-        if (kgUrl) {
-          const href = `${kgUrl}?url=${encodeURIComponent(turtleUrl)}`;
-          return `<a class="view-graph" href="${href}" target="_blank" rel="noopener">${label}</a>`;
-        }
-        return `<a class="view-graph" href="${turtleUrl}" target="_blank" rel="noopener">${label}</a>`;
-      }).join(' ');
+      return [...groups.entries()].map(([model, exList]) => {
+        const pills = exList.map(ex => {
+          const chunkUrl  = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/chunks`;
+          const turtleUrl = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/turtle`;
+          const kgHref    = kgUrl ? `${kgUrl}?url=${encodeURIComponent(turtleUrl)}` : turtleUrl;
+          return `<span class="pill-pair">` +
+            `<a class="pill-left"  href="${chunkUrl}" target="_blank" rel="noopener">${ex.chunk_short_name}</a>` +
+            `<a class="pill-right" href="${kgHref}"   target="_blank" rel="noopener">KG</a>` +
+            `</span>`;
+        }).join(' ');
+        return `<div class="extraction-row">` +
+          `<span class="model-label">${model}</span>${pills}` +
+          `</div>`;
+      }).join('');
     }
 
     function pdfCell(doc) {
@@ -261,7 +307,7 @@
           tr.innerHTML = `
             <td class="name">${nameCell}</td>
             <td class="flag">${markdownCell(doc, mdUrl, triggerUrl)}</td>
-            <td class="flag">${graphsCell(doc, kgUrl)}</td>
+            <td style="vertical-align:middle; padding: 0.35rem 0.9rem;">${graphsCell(doc, kgUrl)}</td>
             <td class="flag">${pdfCell(doc)}</td>
             <td class="flag">${urlCell}</td>
           `;
