@@ -4,7 +4,7 @@ import urllib.request
 
 import click
 
-from jejune_cli.plugin_description import plugin_description
+from jejune_cli.plugin_description import PluginDescription
 from .component_cont_docs_server import comp_docs_server
 
 _DEFAULT_PORT = "8765"
@@ -52,7 +52,7 @@ def hint_availability():
         click.echo("run `docker compose --env-file deployment.env up -d`")
 
 
-plugin = plugin_description(
+plugin = PluginDescription(
     name="docs-server",
     group=docs_server_group,
     config_vars=[_CONFIG_VAR],
