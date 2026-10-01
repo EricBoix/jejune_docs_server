@@ -1,8 +1,8 @@
 """docs-server containerized component."""
-from jejune_cli.component_containerized import cont_comp
+from jejune_cli.component_containerized import ContComp
 
 
-class comp_docs_server(cont_comp):
+class comp_docs_server(ContComp):
     def __init__(self) -> None:
         super().__init__(
             name="docs-server",
