@@ -4,6 +4,7 @@ import urllib.request
 
 import click
 
+from jejune_cli.app_context import AppContext
 from jejune_cli.plugin_description import PluginDescription
 from .component_cont_docs_server import CompDocsServer
 
@@ -11,8 +12,8 @@ _DEFAULT_PORT = "8765"
 _CONFIG_VAR = "DOCS_SERVER_PORT"
 
 
-def _check_availability() -> tuple[bool, str]:
-    if not CompDocsServer().is_running()[0]:
+def _check_availability(component: CompDocsServer) -> tuple[bool, str]:
+    if not component.is_running()[0]:
         return False, "container not running"
     port = os.environ.get(_CONFIG_VAR, _DEFAULT_PORT)
     url = f"http://localhost:{port}/catalog"
@@ -25,15 +26,20 @@ def _check_availability() -> tuple[bool, str]:
         return False, str(exc)
 
 
+def _registered_component(ctx: click.Context) -> CompDocsServer:
+    return ctx.find_object(AppContext).component_registry.get("docs-server")
+
+
 @click.group("docs-server")
 def docs_server_group():
     """Commands for the jejune docs-server UI component."""
 
 
 @docs_server_group.command("status-availability")
-def status_availability():
+@click.pass_context
+def status_availability(ctx):
     """Show docs-server availability status (mirrors the doctor Status column)."""
-    ok, _ = _check_availability()
+    ok, _ = _check_availability(_registered_component(ctx))
     if ok:
         click.echo(f"docs-server: {click.style('ok', fg='green')}")
     else:
@@ -41,9 +47,10 @@ def status_availability():
 
 
 @docs_server_group.command("hint-availability")
-def hint_availability():
+@click.pass_context
+def hint_availability(ctx):
     """Show how to start the docs-server container."""
-    ok, _ = _check_availability()
+    ok, _ = _check_availability(_registered_component(ctx))
     if ok:
         click.echo(click.style("docs-server is reachable", fg="green"))
     else:
@@ -58,6 +65,6 @@ plugin = PluginDescription(
     avail_hint="",
     check_availability=_check_availability,
     target_role="deployer",
-    component=CompDocsServer(),
+    component_factory=CompDocsServer,
     repo_name="jejune_docs_server",
 )
