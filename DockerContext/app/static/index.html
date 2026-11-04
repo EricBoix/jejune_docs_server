@@ -177,9 +177,15 @@
           const chunkUrl  = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/chunks`;
           const turtleUrl = `${origin}/docs/${doc.name}/graphs/${encodeURIComponent(ex.model_name)}/${encodeURIComponent(ex.chunk_short_name)}/turtle`;
           const kgHref    = kgUrl ? `${kgUrl}?url=${encodeURIComponent(turtleUrl)}` : turtleUrl;
+          const setupPills = (ex.graph_setups || []).map(setup => {
+            const setupUrl  = `${turtleUrl.replace(/\/turtle$/, '')}/setups/${encodeURIComponent(setup.name)}`;
+            const setupHref = kgUrl ? `${kgHref}&setup=${encodeURIComponent(setupUrl)}` : setupUrl;
+            return `<a class="pill-right" href="${setupHref}" target="_blank" rel="noopener" title="${setup.description || ''}">${setup.name}</a>`;
+          }).join('');
           return `<span class="pill-pair">` +
             `<a class="pill-left"  href="${chunkUrl}" target="_blank" rel="noopener">${ex.chunk_short_name}</a>` +
             `<a class="pill-right" href="${kgHref}"   target="_blank" rel="noopener">KG</a>` +
+            setupPills +
             `</span>`;
         }).join(' ');
         return `<div class="extraction-row">` +

@@ -190,6 +190,25 @@ def get_graph_turtle(name: str, model_name: str, chunk_short_name: str, request:
 
 
 @app.get(
+    '/docs/{name}/graphs/{model_name}/{chunk_short_name}/setups/{setup_name}',
+    summary='Graph viewer setup (YAML) of a graph extraction entry',
+)
+def get_graph_setup(name: str, model_name: str, chunk_short_name: str, setup_name: str, request: Request):
+    doc = _require_doc(name, request)
+    entry = _require_graph_extraction(doc, model_name, chunk_short_name)
+    setup = next(
+        (item for item in (entry.get('graph_setups') or []) if item.get('name') == setup_name),
+        None,
+    )
+    if setup is None:
+        raise HTTPException(404, f"No graph setup named '{setup_name}' for this extraction entry")
+    path = request.app.state.settings.docs_base / doc['name'] / setup['setup_file']
+    if not path.exists():
+        raise HTTPException(404, 'Graph setup file not found on disk')
+    return FileResponse(path, media_type='application/yaml; charset=utf-8')
+
+
+@app.get(
     '/docs/{name}/graphs/{model_name}/{chunk_short_name}/chunks',
     summary='Source chunk JSON file for a given model and chunk type',
 )
