@@ -1,8 +1,10 @@
 {
-    "cSpell.words": [
-        "fastapi",
-        "PDFS",
-        "pyyaml",
-        "uvicorn"
-    ]
+    "cSpell.customDictionaries": {
+        "jejune_docs_server": {
+            "name": "jejune_docs_server",
+            "path": "${workspaceFolder}/jejune_docs_server-words.txt",
+            "description": "Words used for jejune_docs_server repository",
+            "addWords": true
+        }
+    }
 }
