@@ -5,7 +5,7 @@ services:
       args:
         INCLUDE_PDFS: "false"
       secrets:
-        - gh_token
+        - git_credentials
         - catalog
     ports:
       - "8765:8765"
@@ -17,7 +17,8 @@ services:
     #   - ${JEJUNE_ROOT_DIR}:/docs-mount:ro
 
 secrets:
-  gh_token:
-    file: ${GH_TOKEN_FILE:-/dev/null}
+  # git-credential-store lines, one per private repository (see jejune_cli CompGitAccess)
+  git_credentials:
+    file: ${GIT_CREDENTIALS_FILE:-/dev/null}
   catalog:
     file: ${CATALOG_FILE}

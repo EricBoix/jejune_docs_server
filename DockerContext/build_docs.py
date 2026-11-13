@@ -18,7 +18,7 @@ def main() -> None:
     with open(_SECRET_CATALOG) as f:
         catalog = yaml.safe_load(f).get('documents', [])
 
-    token = os.environ.get('GH_TOKEN', '').strip()
+    credentials_file = os.environ.get('GIT_CREDENTIALS_FILE', '').strip()
     include_pdfs = os.environ.get('INCLUDE_PDFS', 'false').lower() == 'true'
 
     with open(_EFFECTIVE_CATALOG, 'w') as f:
@@ -31,14 +31,20 @@ def main() -> None:
         url = doc['url'].rstrip('/')
         dest = f'/docs/{name}'
 
-        clone_url = url
-        if token:
-            clone_url = url.replace('https://', f'https://x-access-token:{token}@')
+        # Path-aware credentials: each private repository has its own line in
+        # the git-credential-store file, hence credential.useHttpPath=true.
+        git_options = []
+        if credentials_file:
+            git_options = [
+                '-c', 'credential.useHttpPath=true',
+                '-c', f'credential.helper=store --file={credentials_file}',
+            ]
 
         print(f'Cloning {name} ...', flush=True)
         subprocess.run(
-            ['git', 'clone', '--depth=1', clone_url, dest],
+            ['git', *git_options, 'clone', '--depth=1', url, dest],
             check=True,
+            env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'},
         )
 
         shutil.rmtree(os.path.join(dest, '.git'), ignore_errors=True)

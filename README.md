@@ -47,9 +47,13 @@ Then use `jejune_cli` to validate that catalog before building:
 jejune catalog test catalog.yaml
 ```
 
-### Git token
+### Git credentials
 
-GH_TOKEN_FILE=~/.github_token
+Private repositories are cloned with the BuildKit secret `git_credentials`: a
+git-credential-store file holding one path-aware line per private repository
+(`https://[username]:[token]@github.com/[owner]/[repository]`).
+`jejune_cli` generates it from the `token_file` of each private catalog entry
+and removes it once the build is done. Public repositories need nothing.
 
 ## Build
 
@@ -61,10 +65,10 @@ Set `CATALOG_FILE` to point to your catalog and run:
 CATALOG_FILE=`pwd`/catalog.yaml docker compose build
 ```
 
-To use a specific token file:
+To build with private repositories without `jejune_cli`, point to a credentials file:
 
 ```sh
-GH_TOKEN_FILE=~/.github_token CATALOG_FILE=/path/to/catalog.yaml docker compose build
+GIT_CREDENTIALS_FILE=/path/to/git-credentials CATALOG_FILE=/path/to/catalog.yaml docker compose build
 ```
 
 To include PDF files in the image (excluded by default to keep the image small):
