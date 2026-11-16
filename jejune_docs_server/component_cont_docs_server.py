@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from jejune_cli.component_containerized import ContComp
-from jejune_cli.containerized_context import ContainerizedContext
+from jejune_cli.core.component_containerized import ContComp
+from jejune_cli.core.containerized_context import ContainerizedContext
 
 
 class CompDocsServer(ContComp):
